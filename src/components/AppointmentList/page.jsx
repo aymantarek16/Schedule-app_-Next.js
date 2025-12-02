@@ -1,60 +1,43 @@
-"use client";
+'use client';
 import { useEffect, useState } from "react";
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../lip/firebase";
 import AppointmentForm from "../AppointmentForm/page";
 import { toast } from "react-toastify";
-
+import { saveAppointments, loadAppointments } from "../../utils/localStorage";
 
 export default function AppointmentList({ showForm, setShowForm, filter }) {
   const [appointments, setAppointments] = useState([]);
   const [editingAppointment, setEditingAppointment] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "appointments"),
-      (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAppointments(data);
-      }
-    );
-    return () => unsubscribe();
+    setAppointments(loadAppointments());
   }, []);
 
-  // function to repeat style class on other components
-
-  const handleAddEdit = async (data) => {
+  const handleAddEdit = (data) => {
+    let updatedAppointments;
     if (editingAppointment) {
-      const ref = doc(db, "appointments", editingAppointment.id);
-      await updateDoc(ref, data);
+      updatedAppointments = appointments.map((a) =>
+        a.id === editingAppointment.id ? { ...a, ...data } : a
+      );
+      toast.success("Appointment updated successfully!");
     } else {
-      await addDoc(collection(db, "appointments"), data);
+      const newAppointment = { ...data, id: Date.now().toString() };
+      updatedAppointments = [...appointments, newAppointment];
+      toast.success("Appointment created successfully!");
     }
+    setAppointments(updatedAppointments);
+    saveAppointments(updatedAppointments);
     setShowForm(false);
     setEditingAppointment(null);
   };
 
-const handleDelete = async (id) => {
-  if (confirm("Are you sure you want to delete this appointment?")) {
-    try {
-      await deleteDoc(doc(db, "appointments", id));
+  const handleDelete = (id) => {
+    if (confirm("Are you sure you want to delete this appointment?")) {
+      const updatedAppointments = appointments.filter((a) => a.id !== id);
+      setAppointments(updatedAppointments);
+      saveAppointments(updatedAppointments);
       toast.success("Appointment deleted successfully!");
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Failed to delete appointment.");
     }
-  }
-};
+  };
 
   const handleEdit = (appointment) => {
     setEditingAppointment(appointment);
@@ -66,9 +49,9 @@ const handleDelete = async (id) => {
       case "completed":
         return `bg-green-100 text-green-800`;
       case "pending":
-        return `bg-yellow-100 text-yellow-800 `;
+        return `bg-yellow-100 text-yellow-800`;
       case "missed":
-        return `bg-red-100 text-red-800 `;
+        return `bg-red-100 text-red-800`;
       default:
         return "bg-gray-100 text-white";
     }
@@ -131,7 +114,7 @@ const handleDelete = async (id) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex justify-center items-center space-x-2">
                         <span
-                          className={`w-25  py-0.5 text-center text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                          className={`w-25 py-0.5 text-center text-xs leading-5 font-semibold rounded-full ${getStatusColor(
                             a.status
                           )}`}
                         >
@@ -140,18 +123,18 @@ const handleDelete = async (id) => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(a)}
-                          className="px-4 py-1 text-sm font-medium text-white rounded-md bg-gradient-to-r from-blue-500 to-blue-700 hover:from-green-400 hover:to-green-600 focus:outline-none transition-all duration-300 cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(a.id)}
-                          className="px-4 py-1 ml-5 text-sm font-medium text-white rounded-md bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 focus:outline-none transition-all duration-300 cursor-pointer"
-                        >
-                          Delete
-                        </button>
+                      <button
+                        onClick={() => handleEdit(a)}
+                        className="px-4 py-1 text-sm font-medium text-white rounded-md bg-gradient-to-r from-blue-500 to-blue-700 hover:from-green-400 hover:to-green-600 focus:outline-none transition-all duration-300 cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(a.id)}
+                        className="px-4 py-1 ml-5 text-sm font-medium text-white rounded-md bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 focus:outline-none transition-all duration-300 cursor-pointer"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

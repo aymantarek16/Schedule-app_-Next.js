@@ -24,8 +24,6 @@ A clean and modern appointment scheduling app built with **Next.js 15** and **Ta
 
 - State Management: React Hooks
 
-- Backend & Persistence: Firebase Firestore
-
 - Fonts: Geist Sans / Geist Mono (via Google Fonts)
 
 
