@@ -7,6 +7,8 @@ import { saveAppointments, loadAppointments } from "../../utils/localStorage";
 export default function AppointmentList({ showForm, setShowForm, filter }) {
   const [appointments, setAppointments] = useState([]);
   const [editingAppointment, setEditingAppointment] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     setAppointments(loadAppointments());
@@ -18,11 +20,9 @@ export default function AppointmentList({ showForm, setShowForm, filter }) {
       updatedAppointments = appointments.map((a) =>
         a.id === editingAppointment.id ? { ...a, ...data } : a
       );
-      toast.success("Appointment updated successfully!");
     } else {
       const newAppointment = { ...data, id: Date.now().toString() };
       updatedAppointments = [...appointments, newAppointment];
-      toast.success("Appointment created successfully!");
     }
     setAppointments(updatedAppointments);
     saveAppointments(updatedAppointments);
@@ -30,13 +30,23 @@ export default function AppointmentList({ showForm, setShowForm, filter }) {
     setEditingAppointment(null);
   };
 
-  const handleDelete = (id) => {
-    if (confirm("Are you sure you want to delete this appointment?")) {
-      const updatedAppointments = appointments.filter((a) => a.id !== id);
-      setAppointments(updatedAppointments);
-      saveAppointments(updatedAppointments);
-      toast.success("Appointment deleted successfully!");
-    }
+  const openDeleteModal = (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    const updatedAppointments = appointments.filter((a) => a.id !== deleteId);
+    setAppointments(updatedAppointments);
+    saveAppointments(updatedAppointments);
+    toast.success("Appointment deleted successfully!");
+    setShowDeleteModal(false);
+    setDeleteId(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteId(null);
   };
 
   const handleEdit = (appointment) => {
@@ -68,6 +78,31 @@ export default function AppointmentList({ showForm, setShowForm, filter }) {
           onSubmit={handleAddEdit}
           initialData={editingAppointment}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm text-center">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Are you sure you want to delete this appointment?
+            </h3>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+              >
+                OK
+              </button>
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="bg-gray-800 shadow-lg rounded-lg overflow-hidden">
@@ -130,7 +165,7 @@ export default function AppointmentList({ showForm, setShowForm, filter }) {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(a.id)}
+                        onClick={() => openDeleteModal(a.id)}
                         className="px-4 py-1 ml-5 text-sm font-medium text-white rounded-md bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 focus:outline-none transition-all duration-300 cursor-pointer"
                       >
                         Delete

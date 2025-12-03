@@ -10,8 +10,6 @@ A clean and modern appointment scheduling app built with **Next.js 15** and **Ta
 
 - 🔍 Filter appointments by status: All, Pending, Completed, Missed
 
-- ☁️ Real-time data storage and sync using Firebase Firestore
-
 - 📱 Fully responsive and mobile-friendly interface
 
 
